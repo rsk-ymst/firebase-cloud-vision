@@ -2,6 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.example.firebaseauth">
 
+<!--    label = 上のラベルの名前-->
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
@@ -10,14 +11,14 @@
 
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.FirebaseAuth"
+        android:theme="@style/MySuperAppTheme"
         android:usesCleartextTraffic="true">
 
         <activity android:name=".NewMessageActivity">
             <meta-data android:name="android.support.PARENT.LAUNCHER"
                 android:value=".MessageActivity"/>
         </activity>
-        <activity android:name=".LatestMessagesActivity">
+        <activity android:name=".CloudVisionActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
