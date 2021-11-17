@@ -1,7 +1,6 @@
 package com.example.firebaseauth
 
 import android.app.Activity
-import android.content.ContentResolver
 import android.content.Intent
 import android.graphics.drawable.BitmapDrawable
 import android.net.Uri
@@ -22,17 +21,17 @@ class RegisterActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
 //        これは，'kotlin-android-extensions' プラグイン である kotlinx.android.synthetic.main.activity_main.*　が成せる業である
-        btnRegister.setOnClickListener {
+        btnSelectImage.setOnClickListener {
             performRegister()
         }
 
-        btnSelectPhot.setOnClickListener {
-            Log.d("MainActivity", "Try to show photo selector")
-
-            val intent = Intent(Intent.ACTION_PICK)
-            intent.type = "image/*"
-            startActivityForResult(intent, 0)
-        }
+//        btnSelectPhot.setOnClickListener {
+//            Log.d("MainActivity", "Try to show photo selector")
+//
+//            val intent = Intent(Intent.ACTION_PICK)
+//            intent.type = "image/*"
+//            startActivityForResult(intent, 0)
+//        }
 
         txtAlready.setOnClickListener {
             Log.d("MainActivity", "Try to show login activity")
@@ -84,7 +83,7 @@ class RegisterActivity : AppCompatActivity() {
             val bitmap = MediaStore.Images.Media.getBitmap(contentResolver, selectedPhotoUri)
 
             val bitmapDrawable = BitmapDrawable(bitmap)
-            btnSelectPhot.setBackground(bitmapDrawable)
+//            btnSelectPhot.setBackground(bitmapDrawable)
 
         }
     }
@@ -120,7 +119,7 @@ class RegisterActivity : AppCompatActivity() {
                 Log.d("RegisterActivity", "Finally we saved the user to Firebase Database")
                 Toast.makeText(this, "Finally we saved the user to Firebase Database",Toast.LENGTH_SHORT).show()
 
-                val intent = Intent(this, LatestMessagesActivity::class.java)
+                val intent = Intent(this, CloudVisionActivity::class.java)
                 intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TASK.or(Intent.FLAG_ACTIVITY_NEW_TASK)
 
                 startActivity(intent)
