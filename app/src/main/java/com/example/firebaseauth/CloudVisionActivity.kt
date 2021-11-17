@@ -3,35 +3,43 @@ package com.example.firebaseauth
 import android.app.Activity
 import android.content.Intent
 import android.graphics.Bitmap
+import android.graphics.Color
 import android.graphics.drawable.BitmapDrawable
-import android.media.Image
 import android.os.Bundle
 import android.provider.MediaStore
 import android.util.Base64
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
-import android.widget.Toast
+import android.view.View
+import android.widget.Button
+import android.widget.LinearLayout
 import androidx.appcompat.app.AppCompatActivity
-import androidx.fragment.app.FragmentManager
 import com.example.firebaseauth.view.ExtractedColorFragment
 import com.google.android.gms.tasks.Task
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.functions.FirebaseFunctions
-import com.google.firebase.ktx.Firebase
 import com.google.gson.*
-import kotlinx.android.synthetic.main.activity_main.*
+import kotlinx.android.synthetic.main.activity_cloud_vison.*
+import kotlinx.android.synthetic.main.activity_main.btnSelectImage
 import java.io.ByteArrayOutputStream
 import java.net.URI
+import java.util.*
 
 class CloudVisionActivity: AppCompatActivity(){
     lateinit var imageUrl: URI
     private lateinit var functions: FirebaseFunctions
+    
+    private final val ELEMENT_COLOR: String = "color"
+    private final val ELEMENT_SCORE: String = "score"
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_cloud_vison)
+
+        container.setTransitionVisibility(View.INVISIBLE)
+
 
         functions = FirebaseFunctions.getInstance()
 
@@ -40,6 +48,9 @@ class CloudVisionActivity: AppCompatActivity(){
             val intent = Intent(Intent.ACTION_PICK)
             intent.type = "image/*"
             startActivityForResult(intent, 0)
+
+            container.setTransitionVisibility(View.VISIBLE)
+
 
 //            var bitmap: Bitmap = MediaStore.Images.Media.getBitmap(contentResolver, imageUrl)
         }
@@ -88,7 +99,7 @@ class CloudVisionActivity: AppCompatActivity(){
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
 
-        if (requestCode == 0 && resultCode == Activity.RESULT_OK && data != null) {
+        if (requestCode == 0 && resultCode == RESULT_OK && data != null) {
             // proceed and check what the select image was ...
             Log.d("RegisterActivity", "Photo was selected")
 
@@ -116,7 +127,14 @@ class CloudVisionActivity: AppCompatActivity(){
 
             //Add features to the request
             val feature = JsonObject()
-            feature.add("type", JsonPrimitive("TEXT_DETECTION"))
+
+//            val TEXT_DITECTION: String = "TEXT_DETECTION"
+//            val LABEL_DETECTION: String = "LABEL_DETECTION"
+//            val LABEL_DETECTION: String = "IMAGE_PROPERTIES"
+
+            // Create a primitive containing a String value.
+            feature.add("maxResults", JsonPrimitive(10))
+            feature.add("type", JsonPrimitive("IMAGE_PROPERTIES"))
 
             // Alternatively, for DOCUMENT_TEXT_DETECTION:
             // feature.add("type", JsonPrimitive("DOCUMENT_TEXT_DETECTION"))
@@ -135,25 +153,96 @@ class CloudVisionActivity: AppCompatActivity(){
                 .addOnCompleteListener { task ->
                     if (task.isSuccessful) {
                         Log.d("cloud", "success")
-                        Log.d("cloud", annotation["text"].asString)
 
-                        val annotation = task.result!!.asJsonArray[0].asJsonObject["fullTextAnnotation"].asJsonObject
-                        Toast.makeText(this, annotation["text"].asString, Toast.LENGTH_LONG).show()
+//                        asJsonObject = element を key指定で取るやつ
+                        val annotation = task.result!!.asJsonArray[0].asJsonObject["imagePropertiesAnnotation"].asJsonObject["dominantColors"]
+                        val colors: JsonElement = annotation.asJsonObject["colors"]
+//                        Arrays.sort(colors, Collections.reverseOrder())
 
-                        val fragment: ExtractedColorFragment = ExtractedColorFragment()
+
+                        var num = 0
+
+
+                        var scoreMap: MutableMap<Int, Float> = hashMapOf()
+                        var colorHexMap: MutableMap<Int, String> = hashMapOf()
+                        var colorValueMap: MutableMap<Int, Int> = hashMapOf()
+
+                        /* 上位 5位以内 の色だけ抽出し，UIに表示 (i を外で定義してやってたけど，こんなスマートな書き方があるんだ...)*/
+                        for ((i, color) in colors.asJsonArray.withIndex()) {
+                            val RGBElement: JsonElement = color.asJsonObject[ELEMENT_COLOR]
+
+                            val red: Int = RGBElement.asJsonObject["red"].asInt
+                            val green: Int = RGBElement.asJsonObject["green"].asInt
+                            val blue: Int = RGBElement.asJsonObject["blue"].asInt
+
+                            Log.d("test", "red: $red")
+                            Log.d("test", "green: $green")
+                            Log.d("test", "blue: $blue")
+
+                            // key が intの場合，scoreMap.put(num, dominantScore) よりこちらのほうがいいらしい
+                            scoreMap[i] = color.asJsonObject[ELEMENT_SCORE].asFloat
+                            colorHexMap[i] = generateColorHexString(red, green, blue)
+                            colorValueMap[i] = generateColorValue(red, green, blue)
+
+                            //                            var HSV: FloatArray = FloatArray(3)
+//                            Color.RGBToHSV(red, green, blue, HSV)
+//
+//                            val colorValue: Int = Color.HSVToColor(HSV)
+//                            colorValueMap[num] = colorValue
+//                            Log.d("test", "colorValue: $colorValue")
+                        }
+
+
+                        // リスト型にして降順に並び変え，再びmap型に戻す
+                        val sortedScoreMap = scoreMap.toList().sortedByDescending { it.second }.toMap()
+//                        sortedScoreList.toMap()
+
+                        sortedScoreMap.forEach { (k, v) -> Log.d("test","{ $k, $v") }
+                        Log.d("test", "sortedScoreMap: $sortedScoreMap")
+
+                        distributeParams(sortedScoreMap, colorHexMap, colorValueMap)
+
+
+
+
+                        Log.d("annotation", annotation.toString())
+
+//                        Toast.makeText(this, annotation["text"].asString, Toast.LENGTH_LONG).show()
+
+//                        val fragment: ExtractedColorFragment = ExtractedColorFragment.newInstance()
+//                        supportFragmentManager.beginTransaction().setTransition(fragment).addToBackStack(null).commit();
+
+                        val tmp: FloatArray = FloatArray(3)
+                        tmp.sort()
+                        tmp[0] = 200F
+//                        val color = Color.RGBToHSV()
+//                            Color.RGBToHSV(200, 191, 163, tmp)
+
+
+//                        btnSelectImage.setColor
+
                         supportFragmentManager.beginTransaction()
-                            .setTransition(fragment)
-                            .addToBackStack(null)
-                            .commit();
-
-                        supportFragmentManager.beginTransaction()
-                        replaceFragment(fragment)
+//                        replaceFragment(fragment)
                     } else {
                         Log.d("cloud", "failure: " + task.exception.toString())
                     }
                 }
-
         }
+    }
+
+    private fun changeLayoutParams(btn: Button, colorValue: Int, colorHexString: String ,dominantScore: Float) {
+        btn.setBackgroundColor(colorValue)
+
+        var viewParams: LinearLayout.LayoutParams = btn.layoutParams as LinearLayout.LayoutParams
+
+        viewParams.weight = dominantScore
+
+        btn.layoutParams = viewParams
+//        btn.text = "$colorHexString, {$dominantScore * 100}"
+
+        var displayScore = Math.floor(((dominantScore * 100 * 10).toDouble()))/10
+
+        btn.text = "$colorHexString   $displayScore %"
     }
 
     private fun replaceFragment(fragment: ExtractedColorFragment) {
@@ -192,5 +281,62 @@ class CloudVisionActivity: AppCompatActivity(){
         }
         return Bitmap.createScaledBitmap(bitmap, resizedWidth, resizedHeight, false)
     }
+
+    private fun distributeParams(sortedScore: Map<Int, Float>, colorHexMap: Map<Int, String>, colorValueMap: Map<Int, Int>) {
+        val scoreList = sortedScore.toList()
+
+        // map: 配列の引数から，要素を取り出すのが苦手...?
+        // list: 配列として取るのが得意
+        Log.d("test", "scoreList: $scoreList")
+        for (i in 0..9) {
+            Log.d("test", "scoreList: $i")
+            val idx: Int = scoreList[i].first
+
+            /* スマートじゃなけれど，変数名に番号が割り当てられているので，やむを得なく... */
+            when (i) {
+                0 -> changeLayoutParams(dColor0, colorValueMap.getValue(idx), colorHexMap.getValue(idx), sortedScore.getValue(idx))
+                1 -> changeLayoutParams(dColor1, colorValueMap.getValue(idx), colorHexMap.getValue(idx), sortedScore.getValue(idx))
+                2 -> changeLayoutParams(dColor2, colorValueMap.getValue(idx), colorHexMap.getValue(idx), sortedScore.getValue(idx))
+                3 -> changeLayoutParams(dColor3, colorValueMap.getValue(idx), colorHexMap.getValue(idx), sortedScore.getValue(idx))
+                4 -> changeLayoutParams(dColor4, colorValueMap.getValue(idx), colorHexMap.getValue(idx), sortedScore.getValue(idx))
+                5 -> changeLayoutParams(dColor5, colorValueMap.getValue(idx), colorHexMap.getValue(idx), sortedScore.getValue(idx))
+//                6 -> changeLayoutParams(dColor6, colorValueMap.getValue(idx), colorHexMap.getValue(idx), sortedScore.getValue(idx))
+//                7 -> changeLayoutParams(dColor7, colorValueMap.getValue(idx), colorHexMap.getValue(idx), sortedScore.getValue(idx))
+//                8 -> changeLayoutParams(dColor8, colorValueMap.getValue(idx), colorHexMap.getValue(idx), sortedScore.getValue(idx))
+//                9 -> changeLayoutParams(dColor9, colorValueMap.getValue(idx), colorHexMap.getValue(idx), sortedScore.getValue(idx))
+            }
+
+        }
+
+    }
+
+}
+
+private fun generateColorHexString(red: Int, green: Int, blue: Int): String {
+    var colorHexString: StringBuffer = StringBuffer()
+    colorHexString.append("#")
+    colorHexString.append(Integer.toHexString(red))
+    colorHexString.append(Integer.toHexString(green))
+    colorHexString.append(Integer.toHexString(blue))
+
+    Log.d("test", "colorHex: $colorHexString")
+
+
+    return colorHexString.toString()
+}
+
+private fun generateColorValue(red: Int, green: Int, blue: Int): Int {
+    var HSV: FloatArray = FloatArray(3)
+    Color.RGBToHSV(red, green, blue, HSV)
+
+    Log.d("test", "colorValue: ${Color.HSVToColor(HSV)}")
+    return Color.HSVToColor(HSV)
+}
+
+
+
+
+
+class DominantColor() {
 
 }
