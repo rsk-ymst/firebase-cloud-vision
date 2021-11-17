@@ -18,4 +18,10 @@
         <!-- Customize your theme here. -->
 
     </style>
+    <style name="MySuperAppTheme.NoActionBar">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+    </style>
+    <style name="MySuperAppTheme.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
+    <style name="MySuperAppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
 </resources>

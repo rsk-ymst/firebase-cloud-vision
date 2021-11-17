@@ -11,12 +11,12 @@
         android:layout_width="261dp"
         android:layout_height="71dp"
         android:layout_marginBottom="100dp"
-        android:background="@drawable/gradient_register"
+        android:background="@drawable/new_gradient_register"
         android:outlineAmbientShadowColor="#2E1E1E"
         android:shadowColor="@color/browser_actions_title_color"
         android:shadowDy="10"
         android:text="画像を選択"
-        android:textColor="@color/white"
+        android:textColor="@color/browser_actions_title_color"
         android:textColorHighlight="#FFFFFF"
         android:textColorHint="#FFFFFF"
         android:textColorLink="#941414"
@@ -24,6 +24,7 @@
         android:textSelectHandle="@drawable/gradient_register"
         android:textSelectHandleLeft="@drawable/btn_color"
         android:textSelectHandleRight="@drawable/btn_color"
+        android:textStyle="bold"
         app:backgroundTint="@null"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
@@ -105,12 +106,12 @@
                 android:minHeight="0dip"
                 android:text="Button" />
 
-<!--            <Button-->
-<!--                android:id="@+id/dColor6"-->
-<!--                android:layout_width="match_parent"-->
-<!--                android:layout_height="wrap_content"-->
-<!--                android:minHeight="0dip"-->
-<!--                android:text="Button" />-->
+            <!--            <Button-->
+            <!--                android:id="@+id/dColor6"-->
+            <!--                android:layout_width="match_parent"-->
+            <!--                android:layout_height="wrap_content"-->
+            <!--                android:minHeight="0dip"-->
+            <!--                android:text="Button" />-->
 
             <!--            <Button-->
             <!--                android:id="@+id/dColor7"-->

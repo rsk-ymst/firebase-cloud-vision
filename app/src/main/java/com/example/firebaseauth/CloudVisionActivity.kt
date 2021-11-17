@@ -15,7 +15,6 @@ import android.view.View
 import android.widget.Button
 import android.widget.LinearLayout
 import androidx.appcompat.app.AppCompatActivity
-import com.example.firebaseauth.view.ExtractedColorFragment
 import com.google.android.gms.tasks.Task
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.functions.FirebaseFunctions
@@ -49,10 +48,12 @@ class CloudVisionActivity: AppCompatActivity(){
             intent.type = "image/*"
             startActivityForResult(intent, 0)
 
-            container.setTransitionVisibility(View.VISIBLE)
+            btnSelectImage.visibility = View.INVISIBLE
+        }
 
-
-//            var bitmap: Bitmap = MediaStore.Images.Media.getBitmap(contentResolver, imageUrl)
+        dColor5.setOnClickListener {
+            container.visibility = View.INVISIBLE
+            btnSelectImage.visibility = View.VISIBLE
         }
 
         verifyUserIsLoggedIn()
@@ -74,8 +75,6 @@ class CloudVisionActivity: AppCompatActivity(){
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.menu_new_message -> {
-                val intent = Intent(this, NewMessageActivity::class.java)
-                startActivity(intent)
             }
 
             R.id.menu_sign_out -> {
@@ -105,39 +104,31 @@ class CloudVisionActivity: AppCompatActivity(){
 
             val selectedPhotoUri = data.data
 
+            /* 画像を内部ストレージから取得 */
             var bitmap = MediaStore.Images.Media.getBitmap(contentResolver, selectedPhotoUri)
+
+            /* 画像を内部ストレージから取得 */
             bitmap = scaleBitmapDown(bitmap, 640)
 
-            val bitmapDrawable = BitmapDrawable(bitmap)
-//          btnSelectPhot.setBackground(bitmapDrawable)
-
+            /* サーバーに画像を送信するために，ビットマップをエンコードする */
             val byteArrayOutputStream = ByteArrayOutputStream()
             bitmap.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOutputStream)
             val imageBytes: ByteArray = byteArrayOutputStream.toByteArray()
             val base64encoded = Base64.encodeToString(imageBytes, Base64.NO_WRAP)
 
-            // Create json request to cloud vision
-            val request = JsonObject()
-
             // Add image to request
             val image = JsonObject()
-
             image.add("content", JsonPrimitive(base64encoded))
+
+            // Create json request to cloud vision
+            val request = JsonObject()
             request.add("image", image)
 
             //Add features to the request
             val feature = JsonObject()
-
-//            val TEXT_DITECTION: String = "TEXT_DETECTION"
-//            val LABEL_DETECTION: String = "LABEL_DETECTION"
-//            val LABEL_DETECTION: String = "IMAGE_PROPERTIES"
-
-            // Create a primitive containing a String value.
             feature.add("maxResults", JsonPrimitive(10))
             feature.add("type", JsonPrimitive("IMAGE_PROPERTIES"))
 
-            // Alternatively, for DOCUMENT_TEXT_DETECTION:
-            // feature.add("type", JsonPrimitive("DOCUMENT_TEXT_DETECTION"))
             val features = JsonArray()
             features.add(feature)
             request.add("features", features)
@@ -154,14 +145,11 @@ class CloudVisionActivity: AppCompatActivity(){
                     if (task.isSuccessful) {
                         Log.d("cloud", "success")
 
-//                        asJsonObject = element を key指定で取るやつ
+                        // asJsonObject = element を key指定で取るやつ
                         val annotation = task.result!!.asJsonArray[0].asJsonObject["imagePropertiesAnnotation"].asJsonObject["dominantColors"]
                         val colors: JsonElement = annotation.asJsonObject["colors"]
-//                        Arrays.sort(colors, Collections.reverseOrder())
-
 
                         var num = 0
-
 
                         var scoreMap: MutableMap<Int, Float> = hashMapOf()
                         var colorHexMap: MutableMap<Int, String> = hashMapOf()
@@ -183,13 +171,6 @@ class CloudVisionActivity: AppCompatActivity(){
                             scoreMap[i] = color.asJsonObject[ELEMENT_SCORE].asFloat
                             colorHexMap[i] = generateColorHexString(red, green, blue)
                             colorValueMap[i] = generateColorValue(red, green, blue)
-
-                            //                            var HSV: FloatArray = FloatArray(3)
-//                            Color.RGBToHSV(red, green, blue, HSV)
-//
-//                            val colorValue: Int = Color.HSVToColor(HSV)
-//                            colorValueMap[num] = colorValue
-//                            Log.d("test", "colorValue: $colorValue")
                         }
 
 
@@ -201,28 +182,9 @@ class CloudVisionActivity: AppCompatActivity(){
                         Log.d("test", "sortedScoreMap: $sortedScoreMap")
 
                         distributeParams(sortedScoreMap, colorHexMap, colorValueMap)
-
-
-
+                        container.visibility = View.VISIBLE
 
                         Log.d("annotation", annotation.toString())
-
-//                        Toast.makeText(this, annotation["text"].asString, Toast.LENGTH_LONG).show()
-
-//                        val fragment: ExtractedColorFragment = ExtractedColorFragment.newInstance()
-//                        supportFragmentManager.beginTransaction().setTransition(fragment).addToBackStack(null).commit();
-
-                        val tmp: FloatArray = FloatArray(3)
-                        tmp.sort()
-                        tmp[0] = 200F
-//                        val color = Color.RGBToHSV()
-//                            Color.RGBToHSV(200, 191, 163, tmp)
-
-
-//                        btnSelectImage.setColor
-
-                        supportFragmentManager.beginTransaction()
-//                        replaceFragment(fragment)
                     } else {
                         Log.d("cloud", "failure: " + task.exception.toString())
                     }
@@ -238,16 +200,12 @@ class CloudVisionActivity: AppCompatActivity(){
         viewParams.weight = dominantScore
 
         btn.layoutParams = viewParams
-//        btn.text = "$colorHexString, {$dominantScore * 100}"
 
         var displayScore = Math.floor(((dominantScore * 100 * 10).toDouble()))/10
 
         btn.text = "$colorHexString   $displayScore %"
     }
 
-    private fun replaceFragment(fragment: ExtractedColorFragment) {
-
-    }
 
     private fun annotateImage(requestJson: String): Task<JsonElement> {
         return functions
@@ -300,10 +258,6 @@ class CloudVisionActivity: AppCompatActivity(){
                 3 -> changeLayoutParams(dColor3, colorValueMap.getValue(idx), colorHexMap.getValue(idx), sortedScore.getValue(idx))
                 4 -> changeLayoutParams(dColor4, colorValueMap.getValue(idx), colorHexMap.getValue(idx), sortedScore.getValue(idx))
                 5 -> changeLayoutParams(dColor5, colorValueMap.getValue(idx), colorHexMap.getValue(idx), sortedScore.getValue(idx))
-//                6 -> changeLayoutParams(dColor6, colorValueMap.getValue(idx), colorHexMap.getValue(idx), sortedScore.getValue(idx))
-//                7 -> changeLayoutParams(dColor7, colorValueMap.getValue(idx), colorHexMap.getValue(idx), sortedScore.getValue(idx))
-//                8 -> changeLayoutParams(dColor8, colorValueMap.getValue(idx), colorHexMap.getValue(idx), sortedScore.getValue(idx))
-//                9 -> changeLayoutParams(dColor9, colorValueMap.getValue(idx), colorHexMap.getValue(idx), sortedScore.getValue(idx))
             }
 
         }
@@ -331,12 +285,4 @@ private fun generateColorValue(red: Int, green: Int, blue: Int): Int {
 
     Log.d("test", "colorValue: ${Color.HSVToColor(HSV)}")
     return Color.HSVToColor(HSV)
-}
-
-
-
-
-
-class DominantColor() {
-
 }
