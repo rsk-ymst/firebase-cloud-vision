@@ -13,8 +13,16 @@
 
 ![image](https://user-images.githubusercontent.com/81950820/168757271-73bf8b2f-1663-4a75-8f69-cd399ab4401c.png)
 
+
+# このような状況に対処するために作成したアプリ
+
+
+### 画像を入力すると、以下のように色の配分が表示される
+
 ![image](https://user-images.githubusercontent.com/81950820/168758065-d82e63cb-dfc2-407c-8e91-c69d9611ddec.png)
 
-![image](https://user-images.githubusercontent.com/81950820/168760103-a8d9ea0d-f110-4d2f-816f-668640003e89.png)
+<img width="1928" alt="スクリーンショット 2022-05-17 17 25 39" src="https://user-images.githubusercontent.com/81950820/168765999-833948a7-e19f-460d-8439-a8387c4539d9.png">
+
+
 
 ![image](https://user-images.githubusercontent.com/81950820/168759487-208d1bc2-15b4-448c-bcbf-f5113b2fb187.png)
