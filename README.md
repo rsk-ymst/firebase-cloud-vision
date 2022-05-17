@@ -1,5 +1,4 @@
 # firebase-cloud-vision
-firebase-cloud-vision
 - 授業の最終課題にて作成
   - 機械学習を利用したプロダクトなら何でもOK, というテーマ
 - 以下は、授業で発表したスライドに改変を加え、まとめたものです。
